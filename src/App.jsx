@@ -34,14 +34,14 @@ export default function App() {
         const data = JSON.parse(event.data);
 
         console.log("Servidor dice:", data);
-        
+
         if (data.status === 'prediction') {
           // 1. Mostrar la predicción en el video siempre (feedback inmediato)
           setPrediction(`${data.label} (${data.confidence})`);
 
           // 2. Lógica inteligente para el CHAT
           const conf = parseFloat(data.confidence);
-          
+
           // Solo agregamos al historial si:
           // - La confianza es mayor al 88% (muy seguros)
           // - Y la predicción NO es igual al último mensaje (evitar spam)
@@ -62,15 +62,20 @@ export default function App() {
           }
         }
         else if (data.status === 'buffering') {
-            setPrediction(`Cargando... ${data.progress}/20 frames`);
+          setPrediction(`Cargando... ${data.progress}/20 frames`);
         }
       };
 
       // Enviar frames
       interval = setInterval(() => {
         if (webcamRef.current && ws.current.readyState === WebSocket.OPEN) {
-          const imageSrc = webcamRef.current.getScreenshot();
-          if (imageSrc) ws.current.send(imageSrc);
+          // AÑADIMOS CALIDAD 0.5 PARA QUE PESE MENOS
+          const imageSrc = webcamRef.current.getScreenshot({ width: 224, height: 224, quality: 0.5 });
+
+          if (imageSrc) {
+            // console.log("Enviando frame..."); // Descomenta si quieres ver lluvia de logs
+            ws.current.send(imageSrc);
+          }
         }
       }, 150); // 150ms es un buen balance para Render Free
     }
@@ -189,6 +194,7 @@ export default function App() {
                 audio={false}
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
+                screenshotQuality={0.5}
                 className="w-full h-full object-cover"
                 videoConstraints={{ facingMode: "user", width: 224, height: 224 }}
               />
