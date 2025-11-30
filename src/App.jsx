@@ -61,6 +61,9 @@ export default function App() {
             });
           }
         }
+        else if (data.status === 'buffering') {
+            setPrediction(`Cargando... ${data.progress}/20 frames`);
+        }
       };
 
       // Enviar frames
