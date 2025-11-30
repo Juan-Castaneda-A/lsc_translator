@@ -17,41 +17,63 @@ export default function App() {
   const messagesEndRef = useRef(null);
 
   // Conexión WebSocket al Backend
+  // --- LÓGICA WEBSOCKET MEJORADA ---
   useEffect(() => {
+    let interval;
+
     if (isListening && userRole === 'deaf') {
-      // CAMBIA ESTA URL POR LA DE RENDER CUANDO HAGAS DEPLOY
-      // Para pruebas locales usa: 'ws://localhost:8000/ws'
+      // Usamos la URL de tu backend en Render
       ws.current = new WebSocket('wss://modelo-tpi.onrender.com/ws');
 
-      ws.current.onopen = () => console.log("WS Conectado");
+      ws.current.onopen = () => {
+        console.log("✅ Conectado al Backend");
+        setPrediction("Esperando seña...");
+      };
 
       ws.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        
         if (data.status === 'prediction') {
+          // 1. Mostrar la predicción en el video siempre (feedback inmediato)
           setPrediction(`${data.label} (${data.confidence})`);
 
-          // Opcional: Agregar al chat automáticamente si la confianza es alta
-          if (parseFloat(data.confidence) > 85) {
-            // Lógica para evitar spam de mensajes repetidos...
+          // 2. Lógica inteligente para el CHAT
+          const conf = parseFloat(data.confidence);
+          
+          // Solo agregamos al historial si:
+          // - La confianza es mayor al 88% (muy seguros)
+          // - Y la predicción NO es igual al último mensaje (evitar spam)
+          if (conf > 88) {
+            setMessages(prevMessages => {
+              const lastMsg = prevMessages[prevMessages.length - 1];
+              // Si el último mensaje es diferente a la nueva predicción, lo agregamos
+              if (!lastMsg || lastMsg.text !== data.label) {
+                return [...prevMessages, {
+                  id: Date.now(),
+                  text: data.label, // Aquí irá "Clase 22" o lo que diga tu backend
+                  sender: 'deaf',
+                  type: 'translation'
+                }];
+              }
+              return prevMessages;
+            });
           }
         }
       };
 
-      // Enviar frames cada 100ms (10 FPS) para no saturar
-      const interval = setInterval(() => {
+      // Enviar frames
+      interval = setInterval(() => {
         if (webcamRef.current && ws.current.readyState === WebSocket.OPEN) {
           const imageSrc = webcamRef.current.getScreenshot();
-          if (imageSrc) {
-            ws.current.send(imageSrc);
-          }
+          if (imageSrc) ws.current.send(imageSrc);
         }
-      }, 100);
-
-      return () => {
-        clearInterval(interval);
-        ws.current.close();
-      };
+      }, 150); // 150ms es un buen balance para Render Free
     }
+
+    return () => {
+      if (interval) clearInterval(interval);
+      if (ws.current) ws.current.close();
+    };
   }, [isListening, userRole]);
 
   // Auto-scroll al último mensaje
