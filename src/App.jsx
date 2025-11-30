@@ -21,7 +21,7 @@ export default function App() {
     if (isListening && userRole === 'deaf') {
       // CAMBIA ESTA URL POR LA DE RENDER CUANDO HAGAS DEPLOY
       // Para pruebas locales usa: 'ws://localhost:8000/ws'
-      ws.current = new WebSocket('wss://TU-APP-EN-RENDER.onrender.com/ws');
+      ws.current = new WebSocket('wss://modelo-tpi.onrender.com/ws');
 
       ws.current.onopen = () => console.log("WS Conectado");
 
