@@ -32,6 +32,8 @@ export default function App() {
 
       ws.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
+
+        console.log("Servidor dice:", data);
         
         if (data.status === 'prediction') {
           // 1. Mostrar la predicción en el video siempre (feedback inmediato)
