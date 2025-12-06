@@ -23,7 +23,8 @@ export default function App() {
 
     if (isListening && userRole === 'deaf') {
       // Usamos la URL de tu backend en Render
-      ws.current = new WebSocket('wss://modelo-tpi.onrender.com/ws');
+      ws.current = new WebSocket('wss://untough-vilma-septentrional.ngrok-free.dev/ws');
+      //https://untough-vilma-septentrional.ngrok-free.dev
 
       ws.current.onopen = () => {
         console.log("✅ Conectado al Backend");
