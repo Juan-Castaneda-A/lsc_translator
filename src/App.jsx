@@ -15,6 +15,7 @@ export default function App() {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef(null);
+  const [serverImage, setServerImage] = useState(null);
 
   // Conexión WebSocket al Backend
   // --- LÓGICA WEBSOCKET MEJORADA ---
@@ -23,7 +24,7 @@ export default function App() {
 
     if (isListening && userRole === 'deaf') {
       // Usamos la URL de tu backend en Render
-      ws.current = new WebSocket('wss://untough-vilma-septentrional.ngrok-free.dev/ws');
+      ws.current = new WebSocket('ws://localhost:8000/ws');
       //https://untough-vilma-septentrional.ngrok-free.dev
 
       ws.current.onopen = () => {
@@ -33,6 +34,11 @@ export default function App() {
 
       ws.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
+
+        if (data.image) {
+          // Guardamos esa imagen en un estado para mostrarla
+          setServerImage(data.image);
+        }
 
         console.log("Servidor dice:", data);
 
@@ -188,20 +194,28 @@ export default function App() {
       <div className="flex-1 overflow-y-auto p-4 pb-32 flex flex-col gap-4">
 
         {/* Simulación de Cámara (Solo visible si eres sordo o si el otro está señando) */}
+        {/* Simulación de Cámara */}
         <div className="w-full bg-gray-900 rounded-2xl overflow-hidden shadow-lg relative shrink-0" style={{ minHeight: '250px' }}>
           {isListening ? (
-            <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden">
+            <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden flex justify-center items-center">
+
+              {/* 1. Webcam Real (Oculta pero funcionando para capturar) */}
               <Webcam
                 audio={false}
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
                 screenshotQuality={0.5}
-                className="w-full h-full object-cover"
+                className="absolute opacity-0 pointer-events-none" // <--- LA HACEMOS INVISIBLE
                 videoConstraints={{ facingMode: "user", width: 224, height: 224 }}
               />
-              <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded-full backdrop-blur-md">
-                {prediction}
-              </div>
+
+              {/* 2. Imagen del Servidor (Visible con las líneas) */}
+              {serverImage ? (
+                <img src={serverImage} className="w-full h-full object-cover" alt="IA Vision" />
+              ) : (
+                <div className="text-white">Cargando IA...</div>
+              )}
+
             </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
